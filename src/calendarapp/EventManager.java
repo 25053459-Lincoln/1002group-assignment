@@ -6,11 +6,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
+import java.io.*;
+import java.util.*;
 
 public class EventManager {
 
-    private ArrayList<Event> events;
-
+    private List<Event> events;
+    private int nextEventId; 
     public EventManager() {
         events = FileManager.readEvents(); // load events from CSV
     }
@@ -85,7 +88,47 @@ public class EventManager {
     }
 
     // Getter for all events (optional)
-    public ArrayList<Event> getEvents() {
+    public List<Event> getEvents() {
         return events;
     }
+    
+    public void backupEvents(String backupPath) {
+    try (PrintWriter writer = new PrintWriter(new FileWriter(backupPath))) {
+        for (Event e : events) {
+            writer.println(
+                e.getEventId() + "," +
+                e.getTitle() + "," +
+                e.getDescription() + "," +
+                e.getStart() + "," +
+                e.getEnd()
+            );
+        }
+        System.out.println("Backup has been completed to " + backupPath);
+    } catch (IOException e) {
+        System.out.println("Backup failed: " + e.getMessage());
+    }
+}
+public void restoreEvents(String backupPath) {
+    events.clear(); // delete existing events
+    nextEventId = 1;
+
+    try (BufferedReader reader = new BufferedReader(new FileReader(backupPath))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+            String[] parts = line.split(",");
+            int id = Integer.parseInt(parts[0]);
+            String title = parts[1];
+            String desc = parts[2];
+            LocalDateTime start = LocalDateTime.parse(parts[3]);
+            LocalDateTime end = LocalDateTime.parse(parts[4]);
+
+            events.add(new Event(id, title, desc, start, end));
+            nextEventId = Math.max(nextEventId, id + 1);
+        }
+        System.out.println("Restore completed from " + backupPath);
+    } catch (IOException e) {
+        System.out.println("Restore failed: " + e.getMessage());
+    }
+}
+
 }
