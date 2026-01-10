@@ -240,7 +240,22 @@ public class CalendarGUI extends JFrame {
 
     // Main method to launch GUI
     public static void main(String[] args) {
-        EventManager manager = new EventManager();
-        new CalendarGUI(manager);
-    }
+    EventManager manager = new EventManager();
+
+    // TEMP TEST FOR FEATURE 4
+    manager.createEvent(
+        "Test Event",
+        "Backup check",
+        LocalDateTime.now(),
+        LocalDateTime.now().plusHours(1)
+    );
+
+    manager.backupEvents("backup_events.csv");
+
+    manager.restoreEvents("backup_events.csv");
+
+    new CalendarGUI(manager);
 }
+
+    }
+
