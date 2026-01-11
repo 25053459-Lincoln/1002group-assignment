@@ -1,0 +1,50 @@
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class CalendarManager {
+    private List<Event> allEvents;
+
+    public CalendarManager(List<Event> events) {
+        this.allEvents = events;
+    }
+
+    /**
+     * Requirement 8: Check Conflicts
+     * 检查新事件的时间是否与现有事件重叠
+     */
+    public Event findConflict(LocalDateTime newStart, LocalDateTime newEnd) {
+        for (Event existing : allEvents) {
+            // 逻辑：(新开始 < 旧结束) 且 (新结束 > 旧开始) 则冲突
+            if (newStart.isBefore(existing.getEndDateTime()) && 
+                newEnd.isAfter(existing.getStartDateTime())) {
+                return existing;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Requirement 13: Search and Filter
+     * 按关键词（标题或描述）搜索
+     */
+    public List<Event> searchByKeyword(String keyword) {
+        String query = keyword.toLowerCase();
+        return allEvents.stream()
+                .filter(e -> e.getTitle().toLowerCase().contains(query) || 
+                             e.getDescription().toLowerCase().contains(query))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Requirement 13: Search and Filter
+     * 按日期范围过滤
+     */
+    public List<Event> filterByDateRange(LocalDateTime start, LocalDateTime end) {
+        return allEvents.stream()
+                .filter(e -> !e.getStartDateTime().isBefore(start) && 
+                             !e.getEndDateTime().isAfter(end))
+                .collect(Collectors.toList());
+    }
+}
