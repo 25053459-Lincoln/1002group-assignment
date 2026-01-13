@@ -36,6 +36,10 @@ public class CalendarGUI extends JFrame {
 
         JButton searchBtn = new JButton("Search");
 topPanel.add(searchBtn);
+JButton statsBtn = new JButton("Statistics");
+topPanel.add(statsBtn);
+
+statsBtn.addActionListener(e -> showStatistics());
 
 searchBtn.addActionListener(e -> searchDialog());
         add(topPanel, BorderLayout.NORTH);
@@ -57,6 +61,7 @@ searchBtn.addActionListener(e -> searchDialog());
 
         // Initial calendar render
         updateCalendar();
+        showUpcomingReminder();
         setVisible(true);
     }
 
@@ -233,6 +238,8 @@ searchBtn.addActionListener(e -> searchDialog());
 
     // Popup to add a new event
     private void addEventDialog(LocalDate date) {
+        
+
 
     JTextField titleField = new JTextField();
     JTextField descField = new JTextField();
@@ -240,20 +247,30 @@ searchBtn.addActionListener(e -> searchDialog());
     JTextField endField = new JTextField("11:00");
 
     JCheckBox recurringBox = new JCheckBox("Recurring Event");
+    String[] reminderOptions = {
+    "No reminder",
+    "30 minutes before",
+    "1 hour before",
+    "1 day before"
+};
+JComboBox<String> reminderBox = new JComboBox<>(reminderOptions);
+
 
     String[] types = {"DAILY", "WEEKLY", "MONTHLY"};
     JComboBox<String> recurrenceTypeBox = new JComboBox<>(types);
     JTextField repeatCountField = new JTextField("3");
 
     Object[] message = {
-            "Title:", titleField,
-            "Description:", descField,
-            "Start Time (HH:mm):", startField,
-            "End Time (HH:mm):", endField,
-            recurringBox,
-            "Recurrence Type:", recurrenceTypeBox,
-            "Repeat Count:", repeatCountField
-    };
+        "Title:", titleField,
+        "Description:", descField,
+        "Start Time (HH:mm):", startField,
+        "End Time (HH:mm):", endField,
+        "Reminder:", reminderBox,
+        recurringBox,
+        "Recurrence Type:", recurrenceTypeBox,
+        "Repeat Count:", repeatCountField
+};
+
 
     int option = JOptionPane.showConfirmDialog(
             this,
@@ -287,6 +304,22 @@ searchBtn.addActionListener(e -> searchDialog());
                     start,
                     end
             );
+             int reminderMinutes = 0;
+switch (reminderBox.getSelectedIndex()) {
+    case 1 -> reminderMinutes = 30;
+    case 2 -> reminderMinutes = 60;
+    case 3 -> reminderMinutes = 1440;
+}
+
+event.setReminderMinutes(reminderMinutes);
+            if (manager.hasConflict(start, end)) {
+    JOptionPane.showMessageDialog(this,
+        "This event conflicts with another event!",
+        "Conflict Detected",
+        JOptionPane.ERROR_MESSAGE
+    );
+    return;
+}
 
             if (recurringBox.isSelected()) {
                 event.setRecurring(true);
@@ -294,15 +327,24 @@ searchBtn.addActionListener(e -> searchDialog());
                 event.setRecurrenceCount(Integer.parseInt(repeatCountField.getText()));
                 manager.addRecurringEvent(event);
             } else {
-                manager.addEvent(event);
+                manager.createEvent(
+    event.getTitle(),
+    event.getDescription(),
+    event.getStart(),
+    event.getEnd()
+);
+
             }
 
             updateCalendar();
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Invalid input.");
+       
         }
+        
     }
+   
 }
 
 
@@ -356,6 +398,7 @@ searchBtn.addActionListener(e -> searchDialog());
         } else if (choice == JOptionPane.NO_OPTION) { // Delete
             manager.deleteEvent(selectedEvent.getEventId());
             updateCalendar();
+            
         }
     }
 
@@ -377,9 +420,42 @@ searchBtn.addActionListener(e -> searchDialog());
 
     new CalendarGUI(manager);
 }
-    
-    
+    private void showUpcomingReminder() {
+    LocalDateTime now = LocalDateTime.now();
+    Event nearest = null;
 
+    for (Event e : manager.getEvents()) {
+        if (e.getReminderMinutes() > 0 && e.getStart().isAfter(now)) {
+            if (nearest == null || e.getStart().isBefore(nearest.getStart())) {
+                nearest = e;
+            }
+        }
+    }
+
+    if (nearest != null) {
+        long minutes = java.time.Duration.between(now, nearest.getStart()).toMinutes();
+        JOptionPane.showMessageDialog(
+            this,
+            "Upcoming Event:\n" +
+            nearest.getTitle() +
+            "\nStarts in " + minutes + " minutes"
+        );
+    }
+}
+private void showStatistics() {
+    String message =
+            "Event Statistics\n\n" +
+            "Total Events: " + manager.getTotalEvents() + "\n" +
+            "Recurring Events: " + manager.getRecurringEventCount() + "\n" +
+            "Busiest Day: " + manager.getBusiestDay();
+
+    JOptionPane.showMessageDialog(
+            this,
+            message,
+            "Statistics",
+            JOptionPane.INFORMATION_MESSAGE
+    );
+}
 
     }
 
