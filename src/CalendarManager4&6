@@ -1,0 +1,42 @@
+import java.io.*;
+import java.nio.file.*;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class CalendarManager {
+    private static final String EVENT_FILE = "data/event.csv"; // 相对路径 
+    private static final String RECUR_FILE = "data/recurrent.csv";
+
+    // Requirement 6: 基本搜索 (按日期或日期范围) 
+    public List<Event> searchByDateRange(LocalDateTime start, LocalDateTime end, List<Event> allEvents) {
+        return allEvents.stream()
+                .filter(e -> !e.getStartDateTime().isBefore(start) && !e.getEndDateTime().isAfter(end))
+                .collect(Collectors.toList());
+    }
+
+    // Requirement 4: 备份功能 [cite: 24]
+    public void backupData(String backupLocation) {
+        try {
+            File backupDir = new File(backupLocation);
+            if (!backupDir.exists()) backupDir.mkdirs();
+
+            Files.copy(Paths.get(EVENT_FILE), Paths.get(backupLocation, "event_backup.csv"), StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(Paths.get(RECUR_FILE), Paths.get(backupLocation, "recurrent_backup.csv"), StandardCopyOption.REPLACE_EXISTING);
+            
+            System.out.println("Backup has been completed to " + backupLocation); // 文档要求的输出格式 [cite: 24]
+        } catch (IOException e) {
+            System.err.println("Backup failed: " + e.getMessage());
+        }
+    }
+
+    // Requirement 4: 恢复功能 [cite: 24]
+    public void restoreData(String backupFileSource) {
+        try {
+            Files.copy(Paths.get(backupFileSource), Paths.get(EVENT_FILE), StandardCopyOption.REPLACE_EXISTING);
+            System.out.println("Restore successful!");
+        } catch (IOException e) {
+            System.err.println("Restore failed: " + e.getMessage());
+        }
+    }
+}
