@@ -1,0 +1,22 @@
+public class CurrentAccount extends Account { // Second subclass [cite: 5]
+    private double overdraftLimit;
+    private double fee;
+    private String status;
+
+    public CurrentAccount(String accountNumber, String accountHolder, double balance, double overdraftLimit) {
+        super(accountNumber, accountHolder, balance);
+        this.overdraftLimit = overdraftLimit;
+        this.fee = 5.0;
+        this.status = "Active";
+    }
+
+    @Override
+    public void withdraw(double amount) { // Overriding with different logic 
+        if (balance + overdraftLimit >= amount) {
+            balance -= amount;
+            System.out.println(accountHolder + " Current Account Withdrawal: $" + amount);
+        } else {
+            System.out.println("Overdraft limit exceeded!");
+        }
+    }
+}
