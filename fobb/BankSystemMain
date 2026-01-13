@@ -1,0 +1,20 @@
+public class BankSystemMain { // Main class to test [cite: 20]
+    public static void main(String[] args) {
+        System.out.println("--- Demonstration of the operation of banking system ---");
+
+        // Object creation [cite: 11]
+        SavingsAccount mySavings = new SavingsAccount("SA123", "PersonA", 1000.0, 4.2);
+
+        mySavings.displayDetails();
+        mySavings.deposit(500.0);
+        
+        // Testing validation logic
+        mySavings.withdraw(2000.0); 
+        mySavings.withdraw(300.0);
+        
+        // Testing monthly interest computation
+        mySavings.calculateMonthlyInterest();
+        
+        mySavings.displayDetails();
+    }
+}
