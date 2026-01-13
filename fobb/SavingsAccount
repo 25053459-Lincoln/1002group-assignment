@@ -1,0 +1,29 @@
+public class SavingsAccount extends Account { // Inheritance [cite: 10]
+    private double annualInterestRate; // Additional 3 attributes 
+    private double minBalance;
+    private String accountType;
+
+    public SavingsAccount(String accountNumber, String accountHolder, double balance, double interestRate) {
+        super(accountNumber, accountHolder, balance);
+        this.annualInterestRate = interestRate;
+        this.minBalance = 100.0;
+        this.accountType = "Savings";
+    }
+
+    @Override
+    public void withdraw(double amount) { // Method Overriding [cite: 19]
+        // Challenge: Validation logic 
+        if (balance - amount >= minBalance) {
+            balance -= amount;
+            System.out.println(accountHolder + " Withdrawal of savings: $" + amount);
+        } else {
+            System.out.println("Insufficient balance to be withdrawn from savings account!");
+        }
+    }
+
+    public void calculateMonthlyInterest() { // Challenge: Monthly interest computation 
+        double monthlyInterest = balance * (annualInterestRate / 100 / 12);
+        balance += monthlyInterest;
+        System.out.printf("Interest paid: $%.1f%n", monthlyInterest);
+    }
+}
