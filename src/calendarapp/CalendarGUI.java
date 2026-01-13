@@ -256,6 +256,7 @@ public class CalendarGUI extends JFrame {
 
     new CalendarGUI(manager);
 }
+    
 
     }
 
