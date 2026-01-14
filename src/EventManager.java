@@ -1,18 +1,9 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-package Assigment; // 保持和你队友一致的包名
-
-/**
- *
- * @author 丢丢 & You
- */
+package Assigment; 
 
 import java.io.*;
 import java.time.*;
 import java.util.*;
-import javax.swing.JOptionPane; // 添加这一行，用于你的弹窗
+import javax.swing.JOptionPane; // Add this line to your pop-up window
 
 public class EventManager {
 
