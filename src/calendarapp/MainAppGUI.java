@@ -1,0 +1,199 @@
+package calendarapp;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.*;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+
+public class MainAppGUI extends JFrame {
+
+    private EventManager manager;
+    private JTable eventTable;
+    private DefaultTableModel tableModel;
+    private DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    public MainAppGUI() {
+        manager = new EventManager();
+        setTitle("Calendar App");
+        setSize(800, 500);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        // Table setup
+        tableModel = new DefaultTableModel(new String[]{"ID", "Title", "Start", "End"}, 0);
+        eventTable = new JTable(tableModel);
+        refreshTable();
+
+        JScrollPane scrollPane = new JScrollPane(eventTable);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // Buttons panel
+        JPanel panel = new JPanel();
+        JButton addBtn = new JButton("Add Event");
+        JButton updateBtn = new JButton("Update Event");
+        JButton deleteBtn = new JButton("Delete Event");
+        JButton backupBtn = new JButton("Backup");
+        JButton restoreBtn = new JButton("Restore");
+
+        panel.add(addBtn);
+        panel.add(updateBtn);
+        panel.add(deleteBtn);
+        panel.add(backupBtn);
+        panel.add(restoreBtn);
+        add(panel, BorderLayout.SOUTH);
+
+        // Button actions
+        addBtn.addActionListener(e -> addEventDialog(false));
+        updateBtn.addActionListener(e -> updateEventDialog());
+        deleteBtn.addActionListener(e -> deleteSelectedEvent());
+        backupBtn.addActionListener(e -> backupEvents());
+        restoreBtn.addActionListener(e -> restoreEvents());
+
+        // Auto reminder timer (checks every minute)
+        Timer timer = new Timer(true);
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                checkReminders();
+            }
+        }, 0, 60 * 1000); // every minute
+
+        setVisible(true);
+    }
+
+    private void refreshTable() {
+        tableModel.setRowCount(0);
+        List<Event> events = manager.getEvents();
+        for (Event e : events) {
+            tableModel.addRow(new Object[]{e.getEventId(), e.getTitle(),
+                    e.getStart().format(dtf), e.getEnd().format(dtf)});
+        }
+    }
+
+    private void addEventDialog(boolean recurring) {
+        JTextField titleField = new JTextField();
+        JTextField descField = new JTextField();
+        JTextField startField = new JTextField("yyyy-MM-dd HH:mm");
+        JTextField endField = new JTextField("yyyy-MM-dd HH:mm");
+
+        JPanel panel = new JPanel(new GridLayout(0, 1));
+        panel.add(new JLabel("Title:"));
+        panel.add(titleField);
+        panel.add(new JLabel("Description:"));
+        panel.add(descField);
+        panel.add(new JLabel("Start (yyyy-MM-dd HH:mm):"));
+        panel.add(startField);
+        panel.add(new JLabel("End (yyyy-MM-dd HH:mm):"));
+        panel.add(endField);
+
+        if (recurring) {
+            // Could add recurrence options here
+        }
+
+        int result = JOptionPane.showConfirmDialog(this, panel, "Add Event",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                LocalDateTime start = LocalDateTime.parse(startField.getText(), dtf);
+                LocalDateTime end = LocalDateTime.parse(endField.getText(), dtf);
+                manager.createEvent(titleField.getText(), descField.getText(), start, end);
+                refreshTable();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Invalid date/time format!");
+            }
+        }
+    }
+
+    private void updateEventDialog() {
+        int selected = eventTable.getSelectedRow();
+        if (selected == -1) {
+            JOptionPane.showMessageDialog(this, "Select an event first!");
+            return;
+        }
+        int id = (int) tableModel.getValueAt(selected, 0);
+        Event e = manager.getEvents().stream().filter(ev -> ev.getEventId() == id).findFirst().orElse(null);
+        if (e == null) return;
+
+        JTextField titleField = new JTextField(e.getTitle());
+        JTextField descField = new JTextField(e.getDescription());
+        JTextField startField = new JTextField(e.getStart().format(dtf));
+        JTextField endField = new JTextField(e.getEnd().format(dtf));
+
+        JPanel panel = new JPanel(new GridLayout(0, 1));
+        panel.add(new JLabel("Title:"));
+        panel.add(titleField);
+        panel.add(new JLabel("Description:"));
+        panel.add(descField);
+        panel.add(new JLabel("Start (yyyy-MM-dd HH:mm):"));
+        panel.add(startField);
+        panel.add(new JLabel("End (yyyy-MM-dd HH:mm):"));
+        panel.add(endField);
+
+        int result = JOptionPane.showConfirmDialog(this, panel, "Update Event",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                LocalDateTime start = LocalDateTime.parse(startField.getText(), dtf);
+                LocalDateTime end = LocalDateTime.parse(endField.getText(), dtf);
+                manager.updateEvent(id, titleField.getText(), descField.getText(), start, end);
+                refreshTable();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Invalid date/time format!");
+            }
+        }
+    }
+
+    private void deleteSelectedEvent() {
+        int selected = eventTable.getSelectedRow();
+        if (selected == -1) {
+            JOptionPane.showMessageDialog(this, "Select an event first!");
+            return;
+        }
+        int id = (int) tableModel.getValueAt(selected, 0);
+        manager.deleteEvent(id);
+        refreshTable();
+    }
+
+    private void backupEvents() {
+        JFileChooser chooser = new JFileChooser();
+        if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            manager.backupEvents(chooser.getSelectedFile().getAbsolutePath());
+            JOptionPane.showMessageDialog(this, "Backup done!");
+        }
+    }
+
+    private void restoreEvents() {
+        JFileChooser chooser = new JFileChooser();
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            manager.restoreEvents(chooser.getSelectedFile().getAbsolutePath());
+            refreshTable();
+            JOptionPane.showMessageDialog(this, "Restore done!");
+        }
+    }
+
+    private void checkReminders() {
+        LocalDateTime now = LocalDateTime.now();
+        for (Event e : manager.getEvents()) {
+            if (e.getReminderMinutes() > 0) {
+                LocalDateTime reminderTime = e.getStart().minusMinutes(e.getReminderMinutes());
+                if (now.isAfter(reminderTime.minusSeconds(30)) && now.isBefore(reminderTime.plusSeconds(30))) {
+                    SwingUtilities.invokeLater(() ->
+                        JOptionPane.showMessageDialog(this,
+                            "Reminder: " + e.getTitle() + " at " + e.getStart().format(dtf))
+                    );
+                }
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(MainAppGUI::new);
+    }
+}
