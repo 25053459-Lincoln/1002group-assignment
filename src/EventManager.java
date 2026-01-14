@@ -1,9 +1,8 @@
-package Assigment; 
+Eventmanager- package calendarapp;
 
 import java.io.*;
 import java.time.*;
 import java.util.*;
-import javax.swing.JOptionPane; // Add this line to your pop-up window
 
 public class EventManager {
 
@@ -194,91 +193,149 @@ public class EventManager {
     // Save all events
     private void saveAllEvents() { FileManager.saveEvents(events); }
 
-    public void viewAllEvents() {
-        System.out.println("=== All Events ===");
-        for (Event e : events) {
-            System.out.println(e.getEventId() + ": " + e.getTitle() +
-                    " (" + e.getStart() + " to " + e.getEnd() + ")");
-        }
-    }
-
-    // ==========================================================
-    //  YOUR CUSTOM CODE SECTION (Req 8, 9, 13)
-    // ==========================================================
-
-    // [Req 13] Conflict Detection: Check if the new event's time overlaps with any existing events
-    public boolean isTimeSlotAvailable(LocalDateTime newStart, LocalDateTime newEnd, List<Event> allEvents) {
-        for (Event event : allEvents) {
-            // Logic: (NewStart < ExistingEnd) AND (NewEnd > ExistingStart) indicates an overlap
-            if (newStart.isBefore(event.getEnd()) && newEnd.isAfter(event.getStart())) {
-                System.out.println("Conflict detected: Time clash with event [" + event.getTitle() + "]!");
-                return false; // Time slot is unavailable
-            }
-        }
-        return true; // No conflict found
-    }
-
-    // [Req 8] Reminders: Find upcoming events (e.g., within the next 24 hours)
-    public void checkUpcomingReminders(List<Event> allEvents) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime upcomingThreshold = now.plusHours(24); // Set reminder range: within 24 hours
-
-        StringBuilder reminderMessage = new StringBuilder();
-        int count = 0;
-
-        for (Event event : allEvents) {
-            LocalDateTime start = event.getStart();
-            
-            // Check if event is between NOW and the next 24 hours
-            if (start.isAfter(now) && start.isBefore(upcomingThreshold)) {
-                long hoursLeft = java.time.temporal.ChronoUnit.HOURS.between(now, start);
-                reminderMessage.append("• ").append(event.getTitle())
-                               .append(" (starts in ").append(hoursLeft).append(" hours)\n");
-                count++;
-            }
-        }
-
-        if (count > 0) {
-            JOptionPane.showMessageDialog(null, 
-                "You have " + count + " upcoming events in the next 24h:\n" + reminderMessage.toString(), 
-                "Schedule Reminder (Req 8)", 
-                JOptionPane.INFORMATION_MESSAGE);
-        }
-    }
-
-    // [Req 9] Event Statistics: Calculate the busiest day and general stats
-    public String getEventStatistics(List<Event> allEvents) {
-        if (allEvents.isEmpty()) return "No statistics data available.";
-
-        long totalEvents = allEvents.size();
-        long pastEvents = allEvents.stream()
-                .filter(e -> e.getEnd().isBefore(LocalDateTime.now()))
-                .count();
-        long futureEvents = totalEvents - pastEvents;
-
-        // Count events per day to find the busiest one
-        Map<java.time.LocalDate, Long> eventsPerDay = allEvents.stream()
-                .collect(java.util.stream.Collectors.groupingBy(
-                    e -> e.getStart().toLocalDate(), 
-                    java.util.stream.Collectors.counting()
-                ));
-
-        // Find the day with the maximum number of events
-        Map.Entry<java.time.LocalDate, Long> busiestDay = eventsPerDay.entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .orElse(null);
-
-        StringBuilder stats = new StringBuilder();
-        stats.append("=== Event Statistics (Req 9) ===\n");
-        stats.append("Total Events: ").append(totalEvents).append("\n");
-        stats.append("Past Events: ").append(pastEvents).append("\n");
-        stats.append("Upcoming: ").append(futureEvents).append("\n");
-        
-        if (busiestDay != null) {
-            stats.append("Busiest Day: ").append(busiestDay.getKey())
-                 .append(" (").append(busiestDay.getValue()).append(" events)");
-        }
-
-        return stats.toString();
+    
+public void viewAllEvents() {
+    System.out.println("=== All Events ===");
+    for (Event e : events) {
+        System.out.println(e.getEventId() + ": " + e.getTitle() +
+                " (" + e.getStart() + " to " + e.getEnd() + ")");
     }
 }
+public void viewWeeklyList(LocalDate startDate) {
+    System.out.println("=== Week of " + startDate + " ===");
+
+    for (int i = 0; i < 7; i++) {
+        LocalDate day = startDate.plusDays(i);
+        DayOfWeek dow = day.getDayOfWeek();
+        boolean found = false;
+
+        System.out.print(dow.toString().substring(0, 3) + " " +
+                String.format("%02d", day.getDayOfMonth()) + ": ");
+
+        for (Event e : events) {
+            if (e.getStart().toLocalDate().equals(day)) {
+                System.out.print(e.getTitle() +
+                        " (" + e.getStart().toLocalTime() + ")");
+                found = true;
+            }
+        }
+
+        if (!found) System.out.print("No events");
+        System.out.println();
+    }
+}
+public void viewDailyList(LocalDate date) {
+    System.out.println("=== " + date + " ===");
+    boolean found = false;
+
+    for (Event e : events) {
+        if (e.getStart().toLocalDate().equals(date)) {
+            System.out.println(
+                e.getTitle() + " (" + e.getStart().toLocalTime() + ")"
+            );
+            found = true;
+        }
+    }
+
+    if (!found) System.out.println("No events");
+}
+public void viewMonthlyList(YearMonth month) {
+    System.out.println("=== " + month + " ===");
+
+    boolean found = false;
+    for (Event e : events) {
+        if (YearMonth.from(e.getStart()).equals(month)) {
+            System.out.println(
+                e.getStart().toLocalDate() + ": " +
+                e.getTitle() + " (" + e.getStart().toLocalTime() + ")"
+            );
+            found = true;
+        }
+    }
+
+    if (!found) System.out.println("No events");
+}
+public void viewCalendarMonthCLI(YearMonth month) {
+    System.out.println(month.getMonth().toString().substring(0, 3) +
+            " " + month.getYear());
+    System.out.println("Su Mo Tu We Th Fr Sa");
+
+    LocalDate firstDay = month.atDay(1);
+    int startDay = firstDay.getDayOfWeek().getValue() % 7;
+    int daysInMonth = month.lengthOfMonth();
+
+    // spacing before first day
+    for (int i = 0; i < startDay; i++) {
+        System.out.print("   ");
+    }
+
+    for (int day = 1; day <= daysInMonth; day++) {
+        LocalDate current = month.atDay(day);
+        boolean hasEvent = false;
+
+        for (Event e : events) {
+            if (e.getStart().toLocalDate().equals(current)) {
+                hasEvent = true;
+                break;
+            }
+        }
+
+        System.out.print(day);
+        if (hasEvent) System.out.print("*");
+        else System.out.print(" ");
+
+        if ((day + startDay) % 7 == 0) System.out.println();
+        else System.out.print(" ");
+    }
+
+    System.out.println("\n");
+
+    // Event details
+    for (Event e : events) {
+        if (YearMonth.from(e.getStart()).equals(month)) {
+            System.out.println("* " +
+                e.getStart().getDayOfMonth() + ": " +
+                e.getTitle() +
+                " (" + e.getStart().toLocalTime() + ")");
+        }
+    }
+}
+public void showLaunchReminder() {
+    LocalDateTime now = LocalDateTime.now();
+    Event nextEvent = null;
+    Duration shortest = null;
+
+    for (Event e : events) {
+        if (e.getStart().isAfter(now)) {
+            Duration untilEvent = Duration.between(now, e.getStart());
+
+            if (shortest == null || untilEvent.compareTo(shortest) < 0) {
+                shortest = untilEvent;
+                nextEvent = e;
+            }
+        }
+    }
+
+    if (nextEvent == null) {
+        System.out.println("No upcoming events.");
+        return;
+    }
+
+    long minutes = shortest.toMinutes();
+
+    System.out.println("🔔 Reminder");
+    if (minutes < 60) {
+        System.out.println("Your next event \"" + nextEvent.getTitle() +
+                "\" is coming soon in " + minutes + " minutes.");
+    } else if (minutes < 1440) {
+        System.out.println("Your next event \"" + nextEvent.getTitle() +
+                "\" is coming today.");
+    } else {
+        System.out.println("Your next event \"" + nextEvent.getTitle() +
+                "\" is coming soon.");
+    }
+}
+
+
+}
+
