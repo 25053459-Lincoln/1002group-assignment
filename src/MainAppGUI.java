@@ -1,4 +1,4 @@
-package Assigment; 
+package calendarapp;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -39,15 +39,12 @@ public class MainAppGUI extends JFrame {
         JButton deleteBtn = new JButton("Delete Event");
         JButton backupBtn = new JButton("Backup");
         JButton restoreBtn = new JButton("Restore");
-        // [Req 9] 添加统计按钮
-        JButton statsBtn = new JButton("Statistics");
 
         panel.add(addBtn);
         panel.add(updateBtn);
         panel.add(deleteBtn);
         panel.add(backupBtn);
         panel.add(restoreBtn);
-        panel.add(statsBtn); // 把按钮加进面板
         add(panel, BorderLayout.SOUTH);
 
         // Button actions
@@ -56,12 +53,6 @@ public class MainAppGUI extends JFrame {
         deleteBtn.addActionListener(e -> deleteSelectedEvent());
         backupBtn.addActionListener(e -> backupEvents());
         restoreBtn.addActionListener(e -> restoreEvents());
-        
-        // [Req 9] 统计按钮点击事件
-        statsBtn.addActionListener(e -> {
-            String stats = manager.getEventStatistics(manager.getEvents());
-            JOptionPane.showMessageDialog(this, stats, "Event Statistics", JOptionPane.INFORMATION_MESSAGE);
-        });
 
         // Auto reminder timer (checks every minute)
         Timer timer = new Timer(true);
@@ -73,9 +64,6 @@ public class MainAppGUI extends JFrame {
         }, 0, 60 * 1000); // every minute
 
         setVisible(true);
-        
-        // [Req 8] 程序启动时，检查未来24小时的提醒
-        manager.checkUpcomingReminders(manager.getEvents());
     }
 
     private void refreshTable() {
@@ -114,20 +102,10 @@ public class MainAppGUI extends JFrame {
             try {
                 LocalDateTime start = LocalDateTime.parse(startField.getText(), dtf);
                 LocalDateTime end = LocalDateTime.parse(endField.getText(), dtf);
-
-                // [Req 13] 在保存之前，进行冲突检测！
-                if (!manager.isTimeSlotAvailable(start, end, manager.getEvents())) {
-                    JOptionPane.showMessageDialog(this, 
-                        "Conflict Detected! There is already an event during this time.", 
-                        "Time Conflict", 
-                        JOptionPane.ERROR_MESSAGE);
-                    return; // 阻止保存
-                }
-
                 manager.createEvent(titleField.getText(), descField.getText(), start, end);
                 refreshTable();
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Invalid date/time format or error: " + ex.getMessage());
+                JOptionPane.showMessageDialog(this, "Invalid date/time format!");
             }
         }
     }
@@ -216,6 +194,27 @@ public class MainAppGUI extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(MainAppGUI::new);
-    }
+    SwingUtilities.invokeLater(() -> {
+        MainAppGUI app = new MainAppGUI();
+
+        // 🔔 Show reminder on program launch
+        app.manager.showLaunchReminder();
+
+        // Additional fields demo
+        AdditionalFieldManager extra = new AdditionalFieldManager();
+
+        // Add additional fields
+        extra.saveFields(1, "Room 204", "Academic", "Alice; Bob; Charlie");
+
+        // Search additional fields
+        System.out.println("\n--- SEARCH ADDITIONAL FIELDS ---");
+        extra.search("Academic");
+
+        // Backup & restore
+        extra.backup("additional_backup.csv");
+        extra.restore("additional_backup.csv");
+    });
+}
+
+    
 }
